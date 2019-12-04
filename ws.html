@@ -1,0 +1,43 @@
+<h1>
+    Web Socket Example
+</h1>
+<p>
+    open console to see connection.
+</p>
+<p>
+    request:
+    <input type="text" name="req" id="req">
+    <button id="submit">submit</button>
+</p>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+<script>
+
+//  const url = 'wss://red-gold-socket.herokuapp.com'
+ const url = 'ws://localhost:3000'
+ var socket = io(url, { query: "accessKey=bar&uid=ef54ada2-3e8f-4c88-8406-7eeaf4d9fc40" });
+socket.on('connect', function(data){
+  console.log('connected')
+  var submitBtn = document.getElementById('submit');
+  var textField = document.getElementById('req')
+  submitBtn.onclick = function(event){
+    event.preventDefault()
+    var value =  textField.value;
+    console.log('value: ', value)
+    socket.emit('di', socket.id, {value: value})
+    
+  }
+
+
+
+  
+socket.on('dispatch', function(data){
+  console.log(data)
+});
+// socket.emit('login', socket.id, {statue: 'login'})
+  
+});
+socket.on('disconnect', function(){
+  console.log('disconnected')
+});
+
+</script>

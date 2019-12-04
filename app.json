@@ -1,0 +1,6 @@
+{
+  "name": "ts-websocket",
+  "description": "Websocket server to handle realtime date for Telar Social.",
+  "repository": "https://github.com/Qolzam/ts-websocket",
+  "keywords": ["node", "websocket", "socket.io"]
+}
