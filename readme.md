@@ -1,8 +1,5 @@
-# Node.js Socket.io Example
+# Telar Social Websocket
 
-This example accompanies the
-[Using WebSockets on Heroku with Node.js](https://devcenter.heroku.com/articles/node-websockets)
-tutorial.
+Websocket server to handle realtime data like `user chat` and actions in [Telar Social](https://telar.press)git.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
-# ts-websocket
