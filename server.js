@@ -35,16 +35,10 @@ const PORT = process.env.PORT || 3001;
 const INDEX = path.join(__dirname, 'index.html');
 
 const app = express()
-const cors = require('cors')({ origin: true })
+const cors = require('cors')({ origin: "https://red-gold.o6s.io" })
 app.disable('x-powered-by')
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "https://red-gold.o6s.io"); // update to match the domain you will make the request from
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
 
-
-// app.use(cors)
+app.use(cors)
 app.use(cookieParser)
 const rawBodySaver = function (req, res, buf, encoding) {
 
