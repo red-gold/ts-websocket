@@ -15,19 +15,9 @@ const chatRooms = {}
 const users = {}
 
 // Environment Variables
-// const adminAccessKey = process.env.ADMIN_ACCESS_KEY
-// const actionAccessKey = process.env.ACTION_ACCESS_KEY
-// const gateway = process.env.GATEWAY
-// const prettyURL = process.env.PRETTY_URL
-// const getActionRoomAPI = process.env.GET_ACTION_ROOM_API
-// const payloadSecret = process.env.PAYLOAD_SECRET
-const adminAccessKey = process.env.ADMIN_ACCESS_KEY
-const actionAccessKey = process.env.ACTION_ACCESS_KEY
-const prettyURL = process.env.PRETTY_URL
-const gateway = "http://localhost:31112"
-const getActionRoomAPI = process.env.GET_ACTION_ROOM_API
-const payloadSecret = '70bc03d019a6250e5731655e8d2528c68dd27318'
-
+const payloadSecret = `${process.env.PAYLOAD_SECRET}`
+const gateway = `${process.env.GATEWAY}` || "http://www.app.localhost:31112"
+console.log('Payload Secret: ', payloadSecret)
 const X_Cloud_Signature = "X-Cloud-Signature"
 
 
@@ -41,7 +31,7 @@ function getPrettyURLf(url) {
 // *************************
 // Initialize express server
 // *************************
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const INDEX = path.join(__dirname, 'index.html');
 
 const app = express()
@@ -79,12 +69,14 @@ io.use(function (socket, next) {
 
       // TODO: Check access key with server
       checkAccessKey(uid, accessKey, (errorData) => {
-
+        // socket.disconnect(true)
       },
         (data) => {
+          console.log('user is not verified join to room: ', uid)
+
+          socket.join(uid)
           next()
         })
-      socket.join(uid)
     } else {
       next()
     }
@@ -92,43 +84,69 @@ io.use(function (socket, next) {
 
     // TODO: Check access key with server
     checkAccessKey(uid, accessKey, (errorData) => {
-      if (!users[uid] || (users[uid] && users[uid].connections && !users[uid].connections[socket.id])) {
-        console.log('user is not verified join to room: ', uid)
-        socket.join(uid)
-      }
-      users[uid] = { verified: true, connections: { [socket.id]: true } }
-      console.log('User object: ', JSON.stringify(users[uid]))
+      users[uid] = { verified: false }
       next()
     },
       (data) => {
-        users[uid] = { verified: false }
+        console.log('First access accepted.', data)
+        if (!users[uid] || (users[uid] && users[uid].connections && !users[uid].connections[socket.id])) {
+          console.log('user is not verified join to room: ', uid)
+        }
+        if (!data.isVerified) {
+          users[uid] = { verified: false }
+          next()
+          return
+        }
+        socket.join(uid)
+        users[uid] = { verified: true, connections: { [socket.id]: true } }
         next()
       })
   }
 
 });
 
+/**
+ * On connection
+ */
 io.on('connection', (socket) => {
   console.log('Client connected');
   const uid = socket.handshake.query.uid
-
+  console.log('uid: ', uid, 'users[uid]: ', users[uid])
   if (!users[uid] || (users[uid] && !users[uid].verified)) {
     socket.emit('dispatch', 'not authorized..')
     socket.disconnect(true)
   }
-  socket.on('request-chat', (data) => {
 
+  /**
+   * On request chat
+   */
+  socket.on('request-chat', (data) => {
+    console.log('Request chat: ', data)
     // The person who should receive the request
     const recUser = users[data.recUserId]
     if (!recUser) {
+      console.log('Dispatch offline person: ', Actions.setUserOffline(data.recUserId))
+
       io.to(uid).emit('dispatch', Actions.setUserOffline(data.recUserId));
     } else {
-      io.to(data.withUserId).emit('dispatch', Actions.setChatRequest(uid));
+      console.log('Dispatch Request chat: ', Actions.setChatRequest(uid))
+
+      socket.emit('dispatch', Actions.setChatRequest(data.recUserId));
+      getUserProfile(uid, (errorData) => {
+        console.log('Error on getting user profile ', errorData)
+      }, (currentUser) => {
+        io.to(data.recUserId).emit('dispatch', Actions.addUserInfo(uid, currentUser));
+        io.to(data.recUserId).emit('dispatch', Actions.setCallingUser(uid));
+      })
     }
 
   });
 
+  /**
+   * On accept chat
+   */
   socket.on('accept-chat', (data) => {
+    console.log('Accept chat: ', data)
 
     // The person whos request accepted
     const reqUser = users[data.reqUserId]
@@ -136,24 +154,51 @@ io.on('connection', (socket) => {
       io.to(uid).emit('dispatch', Actions.setUserOffline(data.reqUserId));
     } else {
       const newRoomId = uuidv4()
+      console.log('New chatroom: ', data)
+
       chatRooms[newRoomId] = { roomId: newRoomId, connections: { [data.reqUserId]: true, [uid]: true } }
       socket.join(newRoomId)
 
-      socket.emit('dispatch', Actions.addChatConnect(data.reqUserId, { roomId: newRoomId }))
+      
+      socket.emit('dispatch-list', 
+      [
+        Actions.removeChatCalling(data.reqUserId),
+        Actions.addChatConnect(data.reqUserId, { roomId: newRoomId }),
+        Actions.setCurrentChat(data.reqUserId)
+      ]);
 
       // Send room id to the user who requested for chat to join the room by sending room id as a `join` event 
-      io.to(data.recUserId).emit('dispatch', Actions.setAcceptChatRequest(uid, newRoomId));
+      io.to(data.reqUserId).emit('dispatch-list', 
+      [
+        Actions.removeChatRequest(uid),
+        Actions.addChatConnect(uid, { roomId: newRoomId }),
+        Actions.asyncJoinChatRoom(newRoomId),
+        Actions.setCurrentChat(uid)
+
+      ]);
 
     }
-
-
   });
 
   socket.on('join-chat', (data) => {
+    console.log('Join chat: ', data)
 
     // The person whos request accepted
     if (chatRooms[data.roomId] && chatRooms[data.roomId].connections[uid]) {
       socket.join(data.roomId)
+    } else {
+      io.to(uid).emit('dispatch', Actions.showMessage("Can not connect to room, due to wrong room id."));
+    }
+  });
+
+  socket.on('chatroom-message', (data) => {
+    console.log('Send chat message: ', data)
+
+    // The person whos request accepted
+    const message = data.message
+    const chatRoomId = message.chatRoomId
+    if (chatRooms[chatRoomId] && chatRooms[chatRoomId].connections[uid]) {
+      io.to(chatRoomId).emit('dispatch', Actions.addPlainChatRoomMessages([message], chatRoomId))
     } else {
       io.to(uid).emit('dispatch', Actions.showMessage("Can not connect to room, due to wrong room id."));
     }
@@ -162,21 +207,35 @@ io.on('connection', (socket) => {
 
   socket.on('cancel-chat', (data) => {
 
-    // The person whos request accepted
-    if (chatRooms[data.roomId] && chatRooms[data.roomId].connections[uid]) {
-      socket.join(data.roomId)
+    console.log('Cancel chat: ', data)
+    // The person who should receive the request
+    const recUser = users[data.recUserId]
+    if (!recUser) {
+      console.log('Dispatch offline person: ', Actions.setUserOffline(data.recUserId))
+
+      io.to(uid).emit('dispatch', Actions.setUserOffline(data.recUserId));
     } else {
-      io.to(uid).emit('dispatch', Actions.showMessage("Can not connect to room, due to wrong room id."));
+
+      socket.emit('dispatch', Actions.removeChatRequest(data.recUserId));
+      io.to(data.recUserId).emit('dispatch', Actions.removeChatCalling(uid));
+    
     }
   });
 
   socket.on('ignore-chat', (data) => {
 
-    // The person whos request accepted
-    if (chatRooms[data.roomId] && chatRooms[data.roomId].connections[uid]) {
-      socket.join(data.roomId)
+    console.log('Ignore chat: ', data)
+    // The person who should receive the request
+    const reqUser = users[data.reqUserId]
+    if (!reqUser) {
+      console.log('Dispatch offline person: ', Actions.setUserOffline(data.reqUserId))
+
+      io.to(uid).emit('dispatch', Actions.setUserOffline(data.reqUserId));
     } else {
-      io.to(uid).emit('dispatch', Actions.showMessage("Can not connect to room, due to wrong room id."));
+
+      socket.emit('dispatch', Actions.removeChatCalling(data.reqUserId));
+      io.to(data.reqUserId).emit('dispatch', Actions.removeChatRequest(uid));
+    
     }
   });
 
@@ -211,9 +270,13 @@ setInterval(() => io.emit('time', new Date().toTimeString()), 1000);
 // *************************
 // Http Requests
 // *************************
+
+/**
+ * Check user access key
+ */
 function checkAccessKey(userId, accessKey, onError, onSuccess) {
   const hashData = GateKeeper.sign("", payloadSecret)
-  const url = getPrettyURLf(`actions/room/verify/${userId}/${accessKey}`)
+  const url = getPrettyURLf(`actions/room/verify/${accessKey}`)
   const options = {
     uri: url,
     method: "GET",
@@ -221,77 +284,119 @@ function checkAccessKey(userId, accessKey, onError, onSuccess) {
   }
   options.headers[X_Cloud_Signature] = hashData
   options.headers["uid"] = userId
+  console.log('Check access ...')
+  console.log('Request Options: ', options)
+
   request(options, function (error, response, body) {
+    console.log('Response: ')
+    console.log('Status: ', response.statusCode)
+    console.log('Body: ', body)
+
     if (error) {
+      console.log('Error!')
+
       console.log("error: ", error)
       onError(error)
     } else if (response && response.statusCode && response.statusCode == 200) {
+      console.log('Authorized!')
       console.log("body: ", body)
-      onSuccess(body)
+      onSuccess(JSON.parse(body))
     }
   });
 
 }
 
-  // *************************
-  // Controllers
-  // *************************
-
-  /**
-   * Ping controller
-   */
-  const ping = (req, res) => {
-    io.emit('dispatch', 'pong')
-
-    return res.status(200).send({ success: true })
+/**
+ * Get user profile
+ */
+function getUserProfile(userId, onError, onSuccess) {
+  const hashData = GateKeeper.sign("", payloadSecret)
+  const url = getPrettyURLf(`profile/id/${userId}`)
+  const options = {
+    uri: url,
+    method: "GET",
+    headers: {}
   }
+  options.headers[X_Cloud_Signature] = hashData
+  options.headers["uid"] = userId
+  console.log('Get User Profile...')
+  console.log('Request Options: ', options)
 
-  /**
-   * Dispatch controller
-   */
-  const dispatch = async (req, res) => {
-    const hash = req.header(X_Cloud_Signature)
-    var room = req.params.room;
-    const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
-    console.log('isValidReq: ', isValidReq)
-    if (isValidReq) {
-      if (users[room]) {
-        io.to(room).emit('dispatch', req.body)
-        return res.status(200).send({ success: true })
+  request(options, function (error, response, body) {
+    console.log('Response: ')
+    console.log('Status: ', response.statusCode)
+    console.log('Body: ', body)
 
-      } else {
-        return res.status(400).send({ code: "roomNotFundError", message: "Room not found" })
-      }
+    if (error) {
+      console.log("error: ", error)
+      onError(error)
+    } else if (response && response.statusCode && response.statusCode == 200) {
+      console.log("body: ", body)
+      onSuccess(JSON.parse(body))
     }
-    return res.status(400).send({ code: "hmacError", message: "Hmac is not valid!" })
-  }
+  });
 
-  /**
-   * Dispatch list controller
-   */
-  const dispatchList = async (req, res) => {
-    const hash = req.header(X_Cloud_Signature)
-    var room = req.params.room;
-    const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
-    console.log('isValidReq: ', isValidReq)
-    if (isValidReq) {
-      if (users[room]) {
-        io.to(room).emit('dispatch-list', req.body)
-        return res.status(200).send({ success: true })
+}
 
-      } else {
-        return res.status(400).send({ code: "roomNotFundError", message: "Room not found" })
-      }
+// *************************
+// Controllers
+// *************************
+
+/**
+ * Ping controller
+ */
+const ping = (req, res) => {
+  io.emit('dispatch', 'pong')
+
+  return res.status(200).send({ success: true })
+}
+
+/**
+ * Dispatch controller
+ */
+const dispatch = async (req, res) => {
+  const hash = req.header(X_Cloud_Signature)
+  var room = req.params.room;
+  const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+  console.log('isValidReq: ', isValidReq)
+  if (isValidReq) {
+    if (users[room]) {
+      io.to(room).emit('dispatch', req.body)
+      return res.status(200).send({ success: true })
+
+    } else {
+      return res.status(400).send({ code: "roomNotFundError", message: "Room not found" })
     }
-    return res.status(400).send({ code: "hmacError", message: "Hmac is not valid!" })
   }
+  return res.status(400).send({ code: "hmacError", message: "Hmac is not valid!" })
+}
 
-  // *************************
-  // Routing
-  // *************************
-  // app.get('/', home)
+/**
+ * Dispatch list controller
+ */
+const dispatchList = async (req, res) => {
+  const hash = req.header(X_Cloud_Signature)
+  var room = req.params.room;
+  const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+  console.log('isValidReq: ', isValidReq)
+  if (isValidReq) {
+    if (users[room]) {
+      io.to(room).emit('dispatch-list', req.body)
+      return res.status(200).send({ success: true })
 
-  app.get('/ping', ping)
+    } else {
+      return res.status(400).send({ code: "roomNotFundError", message: "Room not found" })
+    }
+  }
+  return res.status(400).send({ code: "hmacError", message: "Hmac is not valid!" })
+}
 
-  app.post('api/dispatch/:room', dispatch)
-  app.post('api/dispatch-list/:room', dispatchList)
+// *************************
+// Routing
+// *************************
+// app.get('/', home)
+
+app.get('/ping', ping)
+
+app.post('api/dispatch/:room', dispatch)
+app.post('api/dispatch-list/:room', dispatchList)

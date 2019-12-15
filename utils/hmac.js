@@ -13,7 +13,7 @@ const GateKeeper = (() => {
     .update(data, 'utf8')
     .digest("hex");
 
-    return hash
+    return 'sha1='+hash
   }
 
   /**

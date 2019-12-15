@@ -13,7 +13,7 @@
 <script>
 
 //  const url = 'wss://red-gold-socket.herokuapp.com'
- const url = 'ws://localhost:3000'
+ const url = 'ws://localhost:3001'
  var socket = io(url, { query: "accessKey=bar&uid=ef54ada2-3e8f-4c88-8406-7eeaf4d9fc40" });
 socket.on('connect', function(data){
   console.log('connected')
