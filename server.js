@@ -16,6 +16,7 @@ const users = {}
 
 // Environment Variables
 const payloadSecret = `${process.env.PAYLOAD_SECRET}`
+const prettyURL = process.env.PRETTY_URL
 const gateway = `${process.env.GATEWAY}` || "http://www.app.localhost:31112"
 console.log('Payload Secret: ', payloadSecret)
 const X_Cloud_Signature = "X-Cloud-Signature"
