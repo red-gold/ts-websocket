@@ -44,7 +44,7 @@ app.use(function(req, res, next) {
 });
 
 
-app.use(cors)
+// app.use(cors)
 app.use(cookieParser)
 const rawBodySaver = function (req, res, buf, encoding) {
 
