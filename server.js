@@ -48,16 +48,18 @@ app.use(function(req, res, next) {
 });
 // app.use(cors)
 app.use(cookieParser)
-const rawBodySaver = function (req, res, buf, encoding) {
-
-  if (buf && buf.length) {
-    req.rawBody = buf.toString(encoding || 'utf8');
-  } else {
-    req.rawBody = ""
-  }
-}
-
-app.use(bodyParser.json({ verify: rawBodySaver }));
+app.use(function(req, res, next) {
+  var data = '';
+  req.setEncoding('utf8');
+  req.on('data', function(chunk) { 
+      data += chunk;
+  });
+  req.on('end', function() {
+      req.rawBody = data;
+      next();
+  });
+});
+app.use(express.bodyParser());
 
 const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
 
