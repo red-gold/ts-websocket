@@ -394,7 +394,7 @@ const dispatch = async (req, res) => {
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
     if (users[room]) {
-      io.to(room).emit('dispatch', req.rawBody)
+      io.to(room).emit('dispatch', JSON.parse(req.rawBody))
       return res.status(200).send({ success: true })
 
     } else {
