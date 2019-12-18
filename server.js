@@ -367,11 +367,11 @@ const dispatch = async (req, res) => {
   console.log("Start Dispatching!")
   const hash = req.header(X_Cloud_Signature)
   if (!hash || (hash && hash == "")) {
-  return res.status(400).send({ code: "hmacError", message: "Hmac is not presented!" })
+  return res.status(400).send({ code: "HMACError", message: "HMAC is not presented!" })
     
   }
   
-  console.log("Dispatch - Hmac presented!")
+  console.log("Dispatch - HMAC presented!")
   var room = req.params.room;
   console.log("Dispatch - Room :", room)
 
@@ -381,7 +381,9 @@ const dispatch = async (req, res) => {
     isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
     
   } catch (error) {
-  return res.status(400).send({ code: "hmacError", message: error })
+    console.log("Dispatch - HMAC Error", message: error )
+
+  return res.status(400).send({ code: "HMACError", message: error })
     
   }
   
@@ -395,7 +397,7 @@ const dispatch = async (req, res) => {
       return res.status(400).send({ code: "roomNotFundError", message: "Room not found" })
     }
   }
-  return res.status(400).send({ code: "hmacError", message: "Hmac is not valid!" })
+  return res.status(400).send({ code: "HMACError", message: "HMAC is not valid!" })
 }
 
 /**
