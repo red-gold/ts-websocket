@@ -394,7 +394,7 @@ const dispatch = async (req, res) => {
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
     if (users[room]) {
-      io.to(room).emit('dispatch', req.body)
+      io.to(room).emit('dispatch', req.rawBody)
       return res.status(200).send({ success: true })
 
     } else {
@@ -407,21 +407,41 @@ const dispatch = async (req, res) => {
 /**
  * Dispatch list controller
  */
-const dispatchList = async (req, res) => {
+const dispatch = async (req, res) => {
+  console.log("Start Dispatching!")
   const hash = req.header(X_Cloud_Signature)
+  if (!hash || (hash && hash == "")) {
+  return res.status(400).send({ code: "HMACError", message: "HMAC is not presented!" })
+    
+  }
+  
+  console.log("Dispatch - HMAC presented!")
   var room = req.params.room;
-  const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+  console.log("Dispatch - Room :", room)
+
+  let isValidReq= false
+  try {
+    console.log("Dispatch - Start Validaiton", req.body, " - ", req.rawBody, " - ", payloadSecret, " - ", hash)
+    isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+    
+  } catch (error) {
+    console.log("Dispatch - HMAC Error: ", error )
+
+  return res.status(400).send({ code: "HMACError", message: error })
+    
+  }
+  
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
     if (users[room]) {
-      io.to(room).emit('dispatch-list', req.body)
+      io.to(room).emit('dispatch-list', req.rawBody)
       return res.status(200).send({ success: true })
 
     } else {
       return res.status(400).send({ code: "roomNotFundError", message: "Room not found" })
     }
   }
-  return res.status(400).send({ code: "hmacError", message: "Hmac is not valid!" })
+  return res.status(400).send({ code: "HMACError", message: "HMAC is not valid!" })
 }
 
 // *************************
