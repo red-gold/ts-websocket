@@ -375,9 +375,10 @@ const dispatch = async (req, res) => {
   var room = req.params.room;
   console.log("Dispatch - Room :", room)
 
+  let isValidReq= false
   try {
     console.log("Dispatch - Start Validaiton", req.rawBody, " - ", payloadSecret, " - ", hash)
-    const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+    isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
     
   } catch (error) {
   return res.status(400).send({ code: "hmacError", message: error })
