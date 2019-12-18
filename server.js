@@ -407,7 +407,7 @@ const dispatch = async (req, res) => {
 /**
  * Dispatch list controller
  */
-const dispatch = async (req, res) => {
+const dispatchList = async (req, res) => {
   console.log("Start Dispatching!")
   const hash = req.header(X_Cloud_Signature)
   if (!hash || (hash && hash == "")) {
