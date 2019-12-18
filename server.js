@@ -381,7 +381,7 @@ const dispatch = async (req, res) => {
     isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
     
   } catch (error) {
-    console.log("Dispatch - HMAC Error", message: error )
+    console.log("Dispatch - HMAC Error: ", error )
 
   return res.status(400).send({ code: "HMACError", message: error })
     
