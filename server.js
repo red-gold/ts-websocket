@@ -48,18 +48,18 @@ app.use(function(req, res, next) {
 });
 // app.use(cors)
 app.use(cookieParser)
-app.use(function(req, res, next) {
-  var data = '';
+app.use (function(req, res, next) {
+  var data='';
   req.setEncoding('utf8');
   req.on('data', function(chunk) { 
-      data += chunk;
+     data += chunk;
   });
+
   req.on('end', function() {
       req.rawBody = data;
       next();
   });
 });
-app.use(express.bodyParser());
 
 const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
 
