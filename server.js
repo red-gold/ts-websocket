@@ -377,7 +377,7 @@ const dispatch = async (req, res) => {
 
   let isValidReq= false
   try {
-    console.log("Dispatch - Start Validaiton", req.body, " - " req.rawBody, " - ", payloadSecret, " - ", hash)
+    console.log("Dispatch - Start Validaiton", req.body, " - ", req.rawBody, " - ", payloadSecret, " - ", hash)
     isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
     
   } catch (error) {
