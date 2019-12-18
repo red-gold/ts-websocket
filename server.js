@@ -364,20 +364,26 @@ const ping = (req, res) => {
  * Dispatch controller
  */
 const dispatch = async (req, res) => {
+  console.log("Start Dispatching!")
   const hash = req.header(X_Cloud_Signature)
   if (!hash || (hash && hash == "")) {
   return res.status(400).send({ code: "hmacError", message: "Hmac is not presented!" })
     
   }
+  
+  console.log("Dispatch - Hmac presented!")
   var room = req.params.room;
+  console.log("Dispatch - Room :", room)
 
   try {
+    console.log("Dispatch - Start Validaiton", req.rawBody, " - ", payloadSecret, " - ", hash)
     const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
     
   } catch (error) {
   return res.status(400).send({ code: "hmacError", message: error })
     
   }
+  
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
     if (users[room]) {
