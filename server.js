@@ -16,8 +16,8 @@ const users = {}
 
 // Environment Variables
 const payloadSecret = `${process.env.PAYLOAD_SECRET}`
-const prettyURL = process.env.PRETTY_URL
-const gateway = `${process.env.GATEWAY}` || "http://www.app.localhost:31112"
+const prettyURL = (process.env.PRETTY_URL == 'true') 
+const gateway = process.env.GATEWAY || "http://www.app.localhost:31112"
 console.log('Payload Secret: ', payloadSecret)
 const X_Cloud_Signature = "X-Cloud-Signature"
 
@@ -365,8 +365,19 @@ const ping = (req, res) => {
  */
 const dispatch = async (req, res) => {
   const hash = req.header(X_Cloud_Signature)
+  if (!hash || (hash && hash == "")) {
+  return res.status(400).send({ code: "hmacError", message: "Hmac is not presented!" })
+    
+  }
   var room = req.params.room;
-  const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+
+  try {
+    const isValidReq = await GateKeeper.validate(req.rawBody, payloadSecret, hash)
+    
+  } catch (error) {
+  return res.status(400).send({ code: "hmacError", message: error })
+    
+  }
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
     if (users[room]) {
@@ -407,5 +418,5 @@ const dispatchList = async (req, res) => {
 
 app.get('/ping', ping)
 
-app.post('api/dispatch/:room', dispatch)
-app.post('api/dispatch-list/:room', dispatchList)
+app.post('/api/dispatch/:room', dispatch)
+app.post('/api/dispatch-list/:room', dispatchList)
