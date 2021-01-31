@@ -16,6 +16,7 @@ const users = {}
 
 // Environment Variables
 const payloadSecret = `${process.env.PAYLOAD_SECRET}`
+const origin = `${process.env.ORIGIN}`
 const prettyURL = (process.env.PRETTY_URL == 'true') 
 const gateway = process.env.GATEWAY || "http://www.app.localhost:31112"
 console.log('Payload Secret: ', payloadSecret)
@@ -36,7 +37,7 @@ const PORT = process.env.PORT || 3001;
 const INDEX = path.join(__dirname, 'index.html');
 
 const app = express()
-const cors = require('cors')({ origin: "https://red-gold.o6s.io" })
+const cors = require('cors')({ origin: origin })
 app.disable('x-powered-by')
 
 app.use(function(req, res, next) {
