@@ -68,7 +68,9 @@ const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
 // Initialize websocket
 // *************************
 
-const io = socketIO(server);
+const io = socketIO(server,{
+  origins: [origin]
+});
 io.use(function (socket, next) {
   var handshakeData = socket.request;
   const accessKey = handshakeData._query['accessKey']
