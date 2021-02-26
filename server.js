@@ -17,17 +17,14 @@ const users = {}
 // Environment Variables
 const payloadSecret = `${process.env.PAYLOAD_SECRET}`
 const origin = `${process.env.ORIGIN}`
-const prettyURL = (process.env.PRETTY_URL == 'true') 
 const gateway = process.env.GATEWAY || "http://www.app.localhost:31112"
+const baseRoute = process.env.BASE_ROUTE || ""
 console.log('Payload Secret: ', payloadSecret)
 const X_Cloud_Signature = "X-Cloud-Signature"
 
 
 function getPrettyURLf(url) {
-  if (prettyURL) {
-    return `${gateway}/${url}`
-  }
-  return `${gateway}/function/${url}`
+  return `${gateway}${baseRoute}${url}`
 }
 
 // *************************
@@ -37,17 +34,31 @@ const PORT = process.env.PORT || 3001;
 const INDEX = path.join(__dirname, 'index.html');
 
 const app = express()
-const cors = require('cors')({ origin: origin })
+if(origin && origin.length > 0) {
+  var cors = require('cors')
+  const whitelist = origin.split(",").map((url) => url.trim())
+  var corsOptions = {
+    origin: function (origin, callback) {
+      if (whitelist.indexOf(origin) !== -1) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    }
+  }
+  app.use(cors(corsOptions))
+} else {
+  console.error('Origin is not defined!')
+}
 app.disable('x-powered-by')
 
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", origin);
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Credentials", true);
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json');
   next();
 });
-// app.use(cors)
 app.use(cookieParser)
 app.use (function(req, res, next) {
   var data='';
@@ -292,7 +303,7 @@ setInterval(() => io.emit('time', new Date().toTimeString()), 1000);
  */
 function checkAccessKey(userId, accessKey, onError, onSuccess) {
   const hashData = GateKeeper.sign("", payloadSecret)
-  const url = getPrettyURLf(`actions/room/verify/${accessKey}`)
+  const url = getPrettyURLf(`/actions/room/verify/${accessKey}`)
   const options = {
     uri: url,
     method: "GET",
@@ -327,7 +338,7 @@ function checkAccessKey(userId, accessKey, onError, onSuccess) {
  */
 function getUserProfile(userId, onError, onSuccess) {
   const hashData = GateKeeper.sign("", payloadSecret)
-  const url = getPrettyURLf(`profile/id/${userId}`)
+  const url = getPrettyURLf(`/profile/id/${userId}`)
   const options = {
     uri: url,
     method: "GET",
