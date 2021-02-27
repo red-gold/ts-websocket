@@ -315,7 +315,6 @@ function checkAccessKey(userId, accessKey, onError, onSuccess) {
   console.log('Request Options: ', options)
 
   request(options, function (error, response, body) {
-    console.log('Response: ', response)
     console.log('Error: ', error)
     console.log('Body: ', body)
 
