@@ -99,7 +99,7 @@ io.use(function (socket, next) {
         // socket.disconnect(true)
       },
         (data) => {
-          console.log('user is not verified join to room: ', uid)
+          console.log('user is verified join to room: ', uid)
 
           socket.join(uid)
           next()
