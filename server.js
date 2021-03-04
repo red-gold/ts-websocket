@@ -42,6 +42,7 @@ if (originEnv && originEnv.length > 0) {
       if (whitelist.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
+        console.error("Origin is not defined! ", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -53,7 +54,7 @@ if (originEnv && originEnv.length > 0) {
 app.disable("x-powered-by");
 
 app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Origin", req.originalUrl);
   res.header("Access-Control-Allow-Credentials", true);
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
   res.header(
