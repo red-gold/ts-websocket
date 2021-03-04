@@ -84,12 +84,7 @@ const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
 // Initialize websocket
 // *************************
 
-const io = socketIO(server, {
-  cors: {
-    origin: "https://telarpress.cloud.telar.dev",
-    methods: ["GET", "POST"],
-  },
-});
+const io = socketIO(server);
 io.use(function (socket, next) {
   var handshakeData = socket.request;
   const accessKey = handshakeData._query["accessKey"];
