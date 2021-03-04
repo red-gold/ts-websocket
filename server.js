@@ -1,7 +1,7 @@
 "use strict";
 
 const request = require("request");
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const express = require("express");
 const socketIO = require("socket.io");
@@ -54,8 +54,9 @@ if (originEnv && originEnv.length > 0) {
 app.disable("x-powered-by");
 
 app.use(function (req, res, next) {
+  console.log("Rquest origin URL: ", req.originalUrl);
   res.header("Access-Control-Allow-Origin", req.originalUrl);
-  res.header("Access-Control-Allow-Credentials", true);
+  // res.header("Access-Control-Allow-Credentials", true);
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
@@ -83,12 +84,12 @@ const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
 // Initialize websocket
 // *************************
 
-const io = socketIO(server,
- { cors: {
+const io = socketIO(server, {
+  cors: {
     origin: "https://telarpress.cloud.telar.dev",
-    methods: ["GET", "POST"]
-  }}
-  );
+    methods: ["GET", "POST"],
+  },
+});
 io.use(function (socket, next) {
   var handshakeData = socket.request;
   const accessKey = handshakeData._query["accessKey"];
