@@ -1,0 +1,179 @@
+import actions from './actions'
+import { getChatRoomById, getUserByUID, setChatRoomById } from './store'
+import { getUserProfile } from './userService'
+import { v4 as uuidv4 } from 'uuid'
+
+/**
+ * Handle request-chat event
+ * @param {*} io socketIO.Server
+ * @param {*} socket socketIO.Socket
+ * @param {*} uid User id
+ * @returns event handler function
+ */
+const onRequestChat = (io, socket, uid) => (data) => {
+  console.log('Request chat: ', data)
+  // The person who should receive the request
+  const recUser = getUserByUID(data.recUserId)
+  if (!recUser) {
+    console.log(
+      'Dispatch offline person: ',
+      actions.setUserOffline(data.recUserId)
+    )
+
+    io.to(uid).emit('dispatch', actions.setUserOffline(data.recUserId))
+  } else {
+    console.log('Dispatch Request chat: ', actions.setChatRequest(uid))
+
+    socket.emit('dispatch', actions.setChatRequest(data.recUserId))
+    getUserProfile(
+      uid,
+      (errorData) => {
+        console.log('Error on getting user profile ', errorData)
+      },
+      (currentUser) => {
+        io.to(data.recUserId).emit(
+          'dispatch',
+          actions.addUserInfo(uid, currentUser)
+        )
+        io.to(data.recUserId).emit('dispatch', actions.setCallingUser(uid))
+      }
+    )
+  }
+}
+
+/**
+ * Handle accept-chat event
+ * @param {*} io socketIO.Server
+ * @param {*} socket socketIO.Socket
+ * @param {*} uid User id
+ * @returns event handler function
+ */
+const onAcceptChat = (io, socket, uid) => (data) => {
+  console.log('Accept chat: ', data)
+
+  // The person whos request accepted
+  const reqUser = getUserByUID(data.reqUserId)
+
+  if (!reqUser) {
+    io.to(uid).emit('dispatch', actions.setUserOffline(data.reqUserId))
+  } else {
+    const newRoomId = uuidv4()
+    console.log('New chatroom: ', data)
+    setChatRoomById(newRoomId, {
+      roomId: newRoomId,
+      connections: { [data.reqUserId]: true, [uid]: true }
+    })
+    socket.join(newRoomId)
+
+    socket.emit('dispatch-list', [
+      actions.removeChatCalling(data.reqUserId),
+      actions.addChatConnect(data.reqUserId, { roomId: newRoomId }),
+      actions.setCurrentChat(data.reqUserId)
+    ])
+
+    // Send room id to the user who requested for chat to join the room by sending room id as a `join` event
+    io.to(data.reqUserId).emit('dispatch-list', [
+      actions.removeChatRequest(uid),
+      actions.addChatConnect(uid, { roomId: newRoomId }),
+      actions.asyncJoinChatRoom(newRoomId),
+      actions.setCurrentChat(uid)
+    ])
+  }
+}
+
+/**
+ * Handle join-chat event
+ * @param {*} io socketIO.Server
+ * @param {*} socket socketIO.Socket
+ * @param {*} uid User id
+ * @returns event handler function
+ */
+const onJoinChat = (io, socket, uid) => (data) => {
+  console.log('Join chat: ', data)
+
+  // The person whos request accepted
+  const chatRoom = getChatRoomById(data.roomId)
+  if (chatRoom && chatRoom.connections[uid]) {
+    socket.join(data.roomId)
+  } else {
+    io.to(uid).emit(
+      'dispatch',
+      actions.showMessage('Can not connect to room, due to wrong room id.')
+    )
+  }
+}
+
+/**
+ * Handle cancel-chat event
+ * @param {*} io socketIO.Server
+ * @param {*} socket socketIO.Socket
+ * @param {*} uid User id
+ * @returns event handler function
+ */
+const onCancelChat = (io, socket, uid) => (data) => {
+  console.log('Cancel chat: ', data)
+
+  // The person who should receive the request
+  const recUser = getUserByUID(data.recUserId)
+  if (!recUser) {
+    console.log(
+      'Dispatch offline person: ',
+      actions.setUserOffline(data.recUserId)
+    )
+
+    io.to(uid).emit('dispatch', actions.setUserOffline(data.recUserId))
+  } else {
+    socket.emit('dispatch', actions.removeChatRequest(data.recUserId))
+    io.to(data.recUserId).emit('dispatch', actions.removeChatCalling(uid))
+  }
+}
+
+/**
+ * Handle ignore-chat event
+ * @param {*} io socketIO.Server
+ * @param {*} socket socketIO.Socket
+ * @param {*} uid User id
+ * @returns event handler function
+ */
+const onIgnoteChat = (io, socket, uid) => (data) => {
+  console.log('Ignore chat: ', data)
+  // The person who should receive the request
+  const reqUser = getUserByUID(data.reqUserId)
+  if (!reqUser) {
+    console.log(
+      'Dispatch offline person: ',
+      actions.setUserOffline(data.reqUserId)
+    )
+
+    io.to(uid).emit('dispatch', actions.setUserOffline(data.reqUserId))
+  } else {
+    socket.emit('dispatch', actions.removeChatCalling(data.reqUserId))
+    io.to(data.reqUserId).emit('dispatch', actions.removeChatRequest(uid))
+  }
+}
+
+/**
+ * Handle WebSocket events
+ */
+export const roomWSEventHandlers = [
+  {
+    key: 'request-chat',
+    value: onRequestChat
+  },
+  {
+    key: 'accept-chat',
+    value: onAcceptChat
+  },
+  {
+    key: 'join-chat',
+    value: onJoinChat
+  },
+  {
+    key: 'cancel-chat',
+    value: onCancelChat
+  },
+  {
+    key: 'ignore-chat',
+    value: onIgnoteChat
+  }
+]
