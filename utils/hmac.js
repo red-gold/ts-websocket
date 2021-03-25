@@ -2,18 +2,16 @@
  * Reference https://github.com/cabrerabywaters/faas-node-gatekeeper/blob/master/index.js
  */
 
-const fs = require("fs");
-const crypto = require("crypto");
+const crypto = require('crypto')
 
 const GateKeeper = (() => {
-
   const sign = (data, sharedSecret) => {
-     const hash = crypto
-    .createHmac("sha1", sharedSecret)
-    .update(data, 'utf8')
-    .digest("hex");
+    const hash = crypto
+      .createHmac('sha1', sharedSecret)
+      .update(data, 'utf8')
+      .digest('hex')
 
-    return 'sha1='+hash
+    return 'sha1=' + hash
   }
 
   /**
@@ -21,18 +19,17 @@ const GateKeeper = (() => {
    * @param {String} hash
    */
   const getHashedMessage = (hash) => {
-
     if (!hash) {
       throw new Error(
-        "We could not get the HASH from your message. Did you sign it? (--sign)"
-      );
+        'We could not get the HASH from your message. Did you sign it? (--sign)'
+      )
     }
 
-    if (hash.includes("sha1=")) {
-      hash = hash.replace("sha1=", "");
+    if (hash.includes('sha1=')) {
+      hash = hash.replace('sha1=', '')
     }
-    return hash;
-  };
+    return hash
+  }
 
   /**
    * Verifies that the message was hashed with
@@ -43,13 +40,12 @@ const GateKeeper = (() => {
    * @param {String} message
    */
   const verify = (hashedMessage, sharedSecret, message) => {
-  
     const expectedHash = crypto
-      .createHmac("sha1", sharedSecret)
+      .createHmac('sha1', sharedSecret)
       .update(message, 'utf8')
-      .digest("hex");
-    return (hashedMessage === expectedHash);
-  };
+      .digest('hex')
+    return (hashedMessage === expectedHash)
+  }
 
   /**
    *  Pulls the Hash and Secret assuming you are
@@ -61,15 +57,15 @@ const GateKeeper = (() => {
    *                        the Hash
    */
   const validate = async (message, secret, hash) => {
-    const hashedMessage = getHashedMessage(hash);
-    return verify(hashedMessage, secret, message);
-  };
+    const hashedMessage = getHashedMessage(hash)
+    return verify(hashedMessage, secret, message)
+  }
 
   return Object.freeze({
     validate,
     verify,
     sign
-  });
-})();
+  })
+})()
 
-module.exports = GateKeeper;
+export { GateKeeper }

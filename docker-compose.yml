@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  nginx:
+    build: ./nginx
+    links:
+      - websocket
+    ports:
+     - "3001:3001"
+  websocket:
+    build:
+      context: ./
+      dockerfile: ./server/Dockerfile
+    expose:
+      - "3001"
+    env_file:
+      - ./.env

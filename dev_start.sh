@@ -1,5 +1,5 @@
-export BASE_ROUTE=/function
-export GATEWAY=http://faas.example.com:31112
-export ORIGIN=http://faas.example.com:31112
-export PAYLOAD_SECRET=1137ed783a8cd16aab528b914cac04e039480fdf
+export BASE_ROUTE=
+export GATEWAY=http://social.example.com
+export ORIGIN=http://social.example.com,http://social.example.com:3000
+export PAYLOAD_SECRET=74a31b3c7dab7357f24d5da70158e9aa0b8f55aa
 npm start
