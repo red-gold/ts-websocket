@@ -9,7 +9,7 @@ services:
   websocket:
     build:
       context: ./
-      dockerfile: ./server/Dockerfile
+      dockerfile: ./src/Dockerfile
     expose:
       - "3001"
     env_file:

@@ -2,6 +2,7 @@ import actions from './actions'
 import { getChatRoomById, getUserByUID, setChatRoomById } from './store'
 import { getUserProfile } from './userService'
 import { v4 as uuidv4 } from 'uuid'
+import { postHMAC } from './httpService'
 
 /**
  * Handle request-chat event
@@ -153,6 +154,37 @@ const onIgnoteChat = (io, socket, uid) => (data) => {
 }
 
 /**
+ * Handle request-active-room event
+ * @param {*} io socketIO.Server
+ * @param {*} socket socketIO.Socket
+ * @param {*} uid User id
+ * @returns event handler function
+ */
+const onRequestActiveRoom = (io, socket, uid) => async (data) => {
+  try {
+    const result = await postHMAC('/vang/room/active', data, { userId: uid })
+    const parsedResult = JSON.parse(result)
+    const roomId = parsedResult.objectId
+    const members = parsedResult.members
+
+    let connections = {}
+    members.forEach((member) => {
+      connections = {
+        ...connections,
+        [member.objectId]: true
+      }
+    })
+    setChatRoomById(roomId, {
+      roomId: roomId,
+      connections
+    })
+    socket.join(roomId)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+/**
  * Handle WebSocket events
  */
 export const roomWSEventHandlers = [
@@ -175,5 +207,9 @@ export const roomWSEventHandlers = [
   {
     key: 'ignore-chat',
     value: onIgnoteChat
+  },
+  {
+    key: 'request-active-room',
+    value: onRequestActiveRoom
   }
 ]

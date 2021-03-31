@@ -1,6 +1,7 @@
 import { GateKeeper } from '../utils/hmac'
 import { appConfig } from './appConfig'
 import { XCloudSignature } from './constants'
+import { reducer } from './reducer'
 import { getUserByUID } from './store'
 
 /**
@@ -23,7 +24,6 @@ export const dispatchController = (io) => async (req, res) => {
   try {
     console.log(
       'Dispatch - Start Validaiton',
-      req.body,
       ' - ',
       req.rawBody,
       ' - ',
@@ -31,6 +31,10 @@ export const dispatchController = (io) => async (req, res) => {
       ' - ',
       hash
     )
+    // Check action
+    const action = JSON.parse(req.rawBody)
+    reducer(action)
+
     isValidReq = await GateKeeper.validate(req.rawBody, appConfig.payloadSecret, hash)
   } catch (error) {
     console.log('Dispatch - HMAC Error: ', error)
@@ -59,7 +63,7 @@ export const dispatchController = (io) => async (req, res) => {
    * Dispatch list controller
    */
 export const dispatchListController = (io) => async (req, res) => {
-  console.log('Start Dispatching!')
+  console.log('Start Dispatching list!')
   const hash = req.header(XCloudSignature)
   if (!hash || (hash && hash === '')) {
     return res

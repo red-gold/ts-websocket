@@ -59,7 +59,11 @@ app.use(function (req, res, next) {
   })
 })
 
-const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`))
+const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+(
+  async () => {
+    const io = await initWebSocket(server)
 
-initWebSocket(server)
-initRouter(app)
+    initRouter(app, io)
+  }
+)()

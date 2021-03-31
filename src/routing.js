@@ -4,8 +4,8 @@ import { dispatchController, dispatchListController, pingController } from './ac
  * Initialize router
  * @param {exporessApp} app
  */
-export const initRouter = (app) => {
-  app.get('/ping', pingController)
-  app.post('/api/dispatch/:room', dispatchController)
-  app.post('/api/dispatch-list/:room', dispatchListController)
+export const initRouter = (app, io) => {
+  app.get('/ping', pingController(io))
+  app.post('/api/dispatch/:room', dispatchController(io))
+  app.post('/api/dispatch-list/:room', dispatchListController(io))
 }

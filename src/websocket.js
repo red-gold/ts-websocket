@@ -1,16 +1,15 @@
 import SocketIO from 'socket.io'
-import { checkAccessKey } from './authService'
+import { checkAccessKey, verifyJWTFromCookei } from './authService'
 import { messageWSEventHandlers } from './messageService'
 import { roomWSEventHandlers } from './roomService'
 import { getUserByUID, setUserByUID } from './store'
-import cookie from 'cookie-parse'
 
 /**
  * Initialize WebSocket
  */
-export const initWebSocket = (server) => {
+export const initWebSocket = async (server) => {
   const io = SocketIO(server)
-  io.use(function (socket, next) {
+  io.use(async function (socket, next) {
     const handshakeData = socket.request
     const accessKey = handshakeData._query.accessKey
     const uid = handshakeData._query.uid
@@ -24,7 +23,7 @@ export const initWebSocket = (server) => {
         console.log('user is not in connection: ', uid)
 
         // TODO: Check access key with server
-        checkAccessKey(
+        await checkAccessKey(
           uid,
           accessKey,
           (errorData) => {
@@ -42,7 +41,7 @@ export const initWebSocket = (server) => {
       }
     } else {
       // TODO: Check access key with server
-      checkAccessKey(
+      await checkAccessKey(
         uid,
         accessKey,
         (errorData) => {
@@ -80,9 +79,9 @@ export const initWebSocket = (server) => {
   io.on('connection', (socket) => {
     console.log('Client connected')
     // TODO: verify cookie
-    const cookies = cookie.parse(socket.handshake.headers.cookie)
-    console.log('cookies: ', cookies)
-    const uid = socket.handshake.query.uid
+    const { claim } = verifyJWTFromCookei(socket.handshake.headers.cookie)
+    console.log('userClaim: ', claim)
+    const { uid } = claim
     const user = getUserByUID(uid)
 
     console.log('uid: ', uid, 'user: ', user)
@@ -125,4 +124,5 @@ export const initWebSocket = (server) => {
   })
 
   setInterval(() => io.emit('time', new Date().toTimeString()), 1000)
+  return io
 }
