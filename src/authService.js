@@ -43,6 +43,7 @@ export const checkAccessKey = async (userId, accessKey, onError, onSuccess) => {
  */
 export const verifyJWTFromCookei = (rawCookie) => {
   const cookies = cookie.parse(rawCookie)
+  console.log('[INFO] Received cookie ', cookies)
   if (!cookies.he) {
     throw new Error('Cookie header is not appeared!')
   }
