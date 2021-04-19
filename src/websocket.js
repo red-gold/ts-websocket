@@ -21,7 +21,9 @@ export const initWebSocket = async (server, origin) => {
     console.log('middleware: ', accessKey, 'uid: ', uid)
     // Verify token from cookie
     try {
+      console.log('[INFO] Verifying user cookie...')
       const { claim } = verifyJWTFromCookei(handshakeData.headers.cookie)
+      console.log('[INFO] Cookie is verified for ', claim.uid)
       socket.uid = claim.uid
       next()
     } catch (error) {
