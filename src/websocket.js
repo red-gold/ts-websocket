@@ -18,7 +18,7 @@ export const initWebSocket = async (server, origin) => {
     const handshakeData = socket.request
     const accessKey = handshakeData._query.accessKey
     const uid = handshakeData._query.uid
-    console.log('middleware: ', accessKey, 'uid: ', uid)
+    console.log('[INFO] middleware: ', accessKey, 'uid: ', uid, ' headers: ', handshakeData.headers)
     // Verify token from cookie
     try {
       console.log('[INFO] Verifying user cookie...')

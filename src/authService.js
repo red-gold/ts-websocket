@@ -42,7 +42,7 @@ export const checkAccessKey = async (userId, accessKey, onError, onSuccess) => {
  * Verify JWT from cookei
  */
 export const verifyJWTFromCookei = (rawCookie) => {
-  console.log('[INFO] Input cookie to parse ', rawCookie)
+  console.log('[INFO] Input verifyJWTFromCookei cookie to parse ', rawCookie)
 
   const cookies = cookie.parse(rawCookie)
   console.log('[INFO] Received cookie ', cookies)
