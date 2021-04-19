@@ -38,7 +38,7 @@ const callAPIWithHMAC = async (method, url, json, userInfo) => {
   const hashData = GateKeeper.sign(JSON.stringify(json), appConfig.payloadSecret)
   const uri = getPrettyURLf(url)
   const options = {
-    headers: {},
+    headers: { origin: 'https://telar.dev' },
     json,
     method
   }
