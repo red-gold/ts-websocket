@@ -37,7 +37,7 @@ app.disable('x-powered-by')
 app.use(function (req, res, next) {
   console.log('Rquest origin URL: ', req.originalUrl)
   res.header('Access-Control-Allow-Origin', '*')
-  // res.header("Access-Control-Allow-Credentials", true);
+  res.header('Access-Control-Allow-Credentials', true)
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
   res.header(
     'Access-Control-Allow-Headers',
