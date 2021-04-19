@@ -64,9 +64,18 @@ const removeChatRequest = (userId) => {
 /**
  * Add plain chat messages
  */
-const addPlainChatRoomMessages = (messages, roomId) => {
+const addRoomMessages = (messages, roomId, requestId) => {
   return {
-    type: 'ADD_PLAIN_CHAT_ROOM_MESSAGES', payload: { messages, roomId }
+    type: 'SG_ADD_ROOM_MESSAGES', payload: { messages, roomId, requestId }
+  }
+}
+
+/**
+ * Add new chat messages
+ */
+const addRoomNewMessages = (messages, roomId) => {
+  return {
+    type: 'SG_ADD_ROOM_NEW_MESSAGES', payload: { messages, roomId }
   }
 }
 
@@ -86,6 +95,13 @@ const showMessage = (message) => {
   }
 }
 
+const errorRequest = (requestId, code, message) => {
+  return {
+    type: 'ERROR_REQUEST',
+    payload: { id: requestId, error: { code, message } }
+  }
+}
+
 export default {
   setUserOffline,
   setChatRequest,
@@ -99,5 +115,7 @@ export default {
   removeChatConnect,
   removeChatRequest,
   removeChatCalling,
-  addPlainChatRoomMessages
+  addRoomMessages,
+  addRoomNewMessages,
+  errorRequest
 }

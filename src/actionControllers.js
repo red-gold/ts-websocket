@@ -1,8 +1,8 @@
 import { GateKeeper } from '../utils/hmac'
+import { actionMiddlewares } from './actionMiddlewares'
 import { appConfig } from './appConfig'
 import { XCloudSignature } from './constants'
 import { reducer } from './reducer'
-import { getUserByUID } from './store'
 
 /**
  * Dispatch controller
@@ -31,9 +31,6 @@ export const dispatchController = (io) => async (req, res) => {
       ' - ',
       hash
     )
-    // Check action
-    const action = JSON.parse(req.rawBody)
-    reducer(action)
 
     isValidReq = await GateKeeper.validate(req.rawBody, appConfig.payloadSecret, hash)
   } catch (error) {
@@ -44,15 +41,11 @@ export const dispatchController = (io) => async (req, res) => {
 
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
-    const user = getUserByUID(room)
-    if (user) {
-      io.to(room).emit('dispatch', JSON.parse(req.rawBody))
-      return res.status(200).send({ success: true })
-    } else {
-      return res
-        .status(400)
-        .send({ code: 'roomNotFundError', message: 'Room not found' })
-    }
+    // Process action
+    const action = actionMiddlewares(io, JSON.parse(req.rawBody))
+    reducer(action)
+    io.to('user:' + room).emit('dispatch', action)
+    return res.status(200).send({ success: true })
   }
   return res
     .status(400)
@@ -96,15 +89,14 @@ export const dispatchListController = (io) => async (req, res) => {
 
   console.log('isValidReq: ', isValidReq)
   if (isValidReq) {
-    const user = getUserByUID(room)
-    if (user) {
-      io.to(room).emit('dispatch-list', req.rawBody)
-      return res.status(200).send({ success: true })
-    } else {
-      return res
-        .status(400)
-        .send({ code: 'roomNotFundError', message: 'Room not found' })
-    }
+    const actionList = JSON.parse(req.rawBody)
+    actionList.map((action) => {
+      const actionAfterMiddleware = actionMiddlewares(io, action)
+      reducer(actionAfterMiddleware)
+      return actionAfterMiddleware
+    })
+    io.to('user:' + room).emit('dispatch-list', req.rawBody)
+    return res.status(200).send({ success: true })
   }
   return res
     .status(400)

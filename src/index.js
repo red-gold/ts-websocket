@@ -12,10 +12,10 @@ console.log('Payload Secret: ', appConfig.payloadSecret)
 // *************************
 const PORT = process.env.PORT || 3001
 
+const whitelist = appConfig.originEnv.split(',').map((url) => url.trim())
 const app = express()
 if (appConfig.originEnv && appConfig.originEnv.length > 0) {
   const cors = require('cors')
-  const whitelist = appConfig.originEnv.split(',').map((url) => url.trim())
   console.log('Origin whitelist: ', whitelist)
 
   const corsOptions = {
@@ -58,11 +58,11 @@ app.use(function (req, res, next) {
     next()
   })
 })
-
-const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+const server = require('http').createServer(app)
+server.listen(PORT, () => console.log(`Listening on ${PORT}`));
 (
   async () => {
-    const io = await initWebSocket(server)
+    const io = await initWebSocket(server, whitelist)
 
     initRouter(app, io)
   }

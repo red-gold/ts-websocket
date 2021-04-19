@@ -54,5 +54,14 @@ export const verifyJWTFromCookei = (rawCookie) => {
   }
 
   const token = `${cookies.he}.${cookies.pa}.${cookies.si}`
-  return jwt.decode(token)
+
+  // create a buffer
+  const buff = Buffer.from(appConfig.publicKey, 'base64')
+
+  // decode buffer as UTF-8
+  const cert = buff.toString('utf-8')
+
+  const verifiedToken = jwt.verify(token, cert, { algorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'] })
+  console.log('[INFO] ', 'verifiedToken ', verifiedToken)
+  return verifiedToken
 }

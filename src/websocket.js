@@ -1,128 +1,113 @@
 import SocketIO from 'socket.io'
-import { checkAccessKey, verifyJWTFromCookei } from './authService'
+import { verifyJWTFromCookei } from './authService'
 import { messageWSEventHandlers } from './messageService'
-import { roomWSEventHandlers } from './roomService'
-import { getUserByUID, setUserByUID } from './store'
+import { getRoomsByUserId, roomWSEventHandlers } from './roomService'
+import { updateLastSeen } from './userService'
 
 /**
  * Initialize WebSocket
  */
-export const initWebSocket = async (server) => {
-  const io = SocketIO(server)
+export const initWebSocket = async (server, origin) => {
+  const io = SocketIO(server, {
+    cors: {
+      origin,
+      credentials: true
+    }
+  })
   io.use(async function (socket, next) {
     const handshakeData = socket.request
     const accessKey = handshakeData._query.accessKey
     const uid = handshakeData._query.uid
     console.log('middleware: ', accessKey, 'uid: ', uid)
-
-    // Check if user already verified
-    const user = getUserByUID(uid)
-    if (user && user.verified) {
-      console.log('user is verified: ', uid)
-      if (!user.connections[socket.id]) {
-        console.log('user is not in connection: ', uid)
-
-        // TODO: Check access key with server
-        await checkAccessKey(
-          uid,
-          accessKey,
-          (errorData) => {
-            // socket.disconnect(true)
-          },
-          (data) => {
-            console.log('user is verified join to room: ', uid)
-
-            socket.join(uid)
-            next()
-          }
-        )
-      } else {
-        next()
-      }
-    } else {
-      // TODO: Check access key with server
-      await checkAccessKey(
-        uid,
-        accessKey,
-        (errorData) => {
-          setUserByUID(uid, { verified: false })
-          next()
-        },
-        (data) => {
-          console.log('First access accepted.', data)
-          const user = getUserByUID(uid)
-          if (
-            !user ||
-            (user && user.connections && !user.connections[socket.id])
-          ) {
-            console.log('user is not verified join to room: ', uid)
-          }
-          if (!data.isVerified) {
-            setUserByUID(uid, { verified: false })
-            next()
-            return
-          }
-          socket.join(uid)
-          setUserByUID(uid, {
-            verified: true,
-            connections: { [socket.id]: true }
-          })
-          next()
-        }
-      )
+    // Verify token from cookie
+    try {
+      const { claim } = verifyJWTFromCookei(handshakeData.headers.cookie)
+      socket.uid = claim.uid
+      next()
+    } catch (error) {
+      next(error)
     }
   })
 
   /**
    * On connection
    */
-  io.on('connection', (socket) => {
-    console.log('Client connected')
-    // TODO: verify cookie
-    const { claim } = verifyJWTFromCookei(socket.handshake.headers.cookie)
-    console.log('userClaim: ', claim)
-    const { uid } = claim
-    const user = getUserByUID(uid)
+  io.on('connection', async (socket) => {
+    console.log('[INFO] ', 'Client connected ', socket.uid)
 
-    console.log('uid: ', uid, 'user: ', user)
-    if (!user || (user && !user.verified)) {
-      socket.emit('dispatch', 'not authorized..')
-      socket.disconnect(true)
-    }
+    const { uid } = socket
 
-    // Add event handlers
+    // Join socket to target user
+    socket.join('user:' + uid)
+
+    // Merge event handlers
     const wsEventHandlers = [...roomWSEventHandlers, ...messageWSEventHandlers]
 
+    // Register all event handlers
     wsEventHandlers.forEach((handler) => {
       socket.on(handler.key, handler.value(io, socket, uid))
     })
 
-    /**
-     * On disconnect
-     */
-    socket.on('disconnect', () => {
-      const user = getUserByUID(uid)
-      if (user.connections) {
-        const conKeys = Object.keys(user.connections)
-
-        let newCons = {}
-        let newConCounter = 0
-        conKeys.forEach((key) => {
-          if (key !== socket.id) {
-            ++newConCounter
-            newCons = { ...newCons, [key]: true }
-          }
+    // TODO: Get user rooms from API if this is the first connection
+    try {
+      const sockets = io.sockets.adapter.rooms.get('user:' + uid)
+      const { rooms, roomIds } = await getRoomsByUserId(uid)
+      socket.emit('dispatch', { type: 'SET_ROOM_ENTITIES', payload: { rooms } })
+      if (sockets.size === 1) {
+        roomIds.forEach((roomId) => {
+          socket.join('room:' + roomId)
+          io.to('room:' + roomId).emit('dispatch', { type: 'UPDATE_LAST_SEEN_USER', payload: { roomId: roomId, userId: uid, lastSeen: 1 } })
         })
-
-        if (newConCounter > 0) {
-          user.connections = { ...newCons }
-        } else {
-          setUserByUID(uid, { verified: false })
-        }
+      } else if (sockets.size > 1) {
+        roomIds.forEach((roomId) => {
+          socket.join('room:' + roomId)
+        })
       }
-    })
+    } catch (error) {
+      console.log('[ERROR] on preparing rooms to join ', error)
+    }
+
+    // On disconnecting
+    socket.on('disconnecting', handleDisconnecting(io, socket, uid))
+
+    // On disconnect
+    socket.on('disconnect', handleDisconnect(io, socket, uid))
+
+    // Update last seen
+    await updateLastSeen(uid)
   })
 
   setInterval(() => io.emit('time', new Date().toTimeString()), 1000)
   return io
+}
+
+/**
+ * Handle socket disconnect
+ * @param {*} socket User socket
+ * @param {*} uid User ID
+ */
+const handleDisconnecting = (io, socket, uid) => async () => {
+  const sockets = io.sockets.adapter.rooms.get('user:' + uid)
+  if (sockets.size === 1) {
+    console.log('[INFO] User is going to offline ')
+    const parsedRooms = Array.from(socket.rooms)
+    const chatRooms = parsedRooms.filter((room) => room.startsWith('room:'))
+    chatRooms.forEach((room) => {
+      io.to(room).emit('dispatch', { type: 'UPDATE_LAST_SEEN_USER', payload: { roomId: room.slice(5), userId: uid, lastSeen: new Date().getTime() } })
+    })
+  }
+}
+
+/**
+ * Handle socket disconnect
+ * @param {*} socket User socket
+ * @param {*} uid User ID
+ */
+const handleDisconnect = (io, socket, uid) => async () => {
+  /**
+   * Join socket to target user
+   */
+  socket.leave('user:' + uid)
+
+  await updateLastSeen(uid)
 }

@@ -2,5 +2,7 @@ export BASE_ROUTE=
 export GATEWAY=http://social.example.com
 export ORIGIN=http://social.example.com,http://social.example.com:3000
 export PAYLOAD_SECRET=74a31b3c7dab7357f24d5da70158e9aa0b8f55aa
+export PUBLIC_KEY="LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFRVBhejlZQndIWFJBMTNTN0g1eHdJYko5OGo4eApIbVBNeDFTRjdOUHMvTFZLWXhXcW5QdjA0d01hRi9XWnFDUkdIc2s2OTQxc2Uxek8zb245em1QWTdnPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+
 npm run build
 npm start

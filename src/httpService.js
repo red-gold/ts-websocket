@@ -11,18 +11,42 @@ import { XCloudSignature } from './constants'
  * @param {*} userInfo User information for request
  * @returns response body
  */
-export const postHMAC = async (url, body, userInfo) => {
-  const hashData = GateKeeper.sign(JSON.stringify(body), appConfig.payloadSecret)
+export const postHMAC = (url, json, userInfo) => {
+  return callAPIWithHMAC('POST', url, json, userInfo)
+}
+
+/**
+ *  Put request with HMAC
+ * @param {string} url Request URL
+ * @param {*} body Request payload
+ * @param {*} userInfo User information for request
+ * @returns response body
+ */
+export const putHMAC = (url, json, userInfo) => {
+  return callAPIWithHMAC('PUT', url, json, userInfo)
+}
+
+/**
+ * Call api with HMAC header
+ * @param {POST|GET|PUT} method HTTP method
+ * @param {string} url Request URL
+ * @param {*} body Request payload
+ * @param {*} userInfo User information for request
+ * @returns response body
+ */
+const callAPIWithHMAC = async (method, url, json, userInfo) => {
+  const hashData = GateKeeper.sign(JSON.stringify(json), appConfig.payloadSecret)
   const uri = getPrettyURLf(url)
   const options = {
     headers: {},
-    json: body
+    json,
+    method
   }
   options.headers[XCloudSignature] = hashData
   options.headers.uid = userInfo.userId
 
   try {
-    const response = await got.post(uri, options)
+    const response = await got(uri, options)
     if (response && response.statusCode && response.statusCode === 200) {
       console.log('body: ', response.body)
       return response.body
