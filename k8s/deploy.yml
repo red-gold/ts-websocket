@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ws
+  namespace: openfaas-fn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telar
+      component: ws
+  template:
+    metadata:
+      labels:
+        component: ws
+        app: telar
+    spec:
+      containers:
+        - name: ws
+          image: qolzam/vang-ws:v0.1.5
+          ports:
+            - containerPort: 3001
+          env:
+          - name: BASE_ROUTE
+            value: ""
+          - name: GATEWAY
+            value: "https://social.faas.telar.dev"
+          - name: ORIGIN
+            value: "https://social.telar.dev,https://social.faas.telar.dev"
+          - name: PAYLOAD_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: payload-secret
+          - name: PUBLIC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: key.pub
+          - name: EMAIL_NOTIFY_INTERVAL
+            value: "5"
+          - name: FN_UUID
+            value: "5ecc1506-e857-4827-ad29-37d1ef5f9eec"

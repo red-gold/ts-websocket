@@ -1,5 +1,6 @@
 import { getUserStatus } from './userService'
 import { OnlineStatus } from './constants'
+import actions from './actions'
 export const actionMiddlewares = (io, action) => {
   switch (action.type) {
     case 'SET_ACTIVE_ROOM':
@@ -22,13 +23,15 @@ const setActiveRoom = (io, action) => {
   const { payload } = action
   const { room, users } = payload
   const { members } = room
-
+  const roomId = room.objectId
   members.forEach((userId) => {
     const userStatus = getUserStatus(io, userId)
     if (userStatus === OnlineStatus) {
       users[userId].lastSeen = 1
     }
   })
+
+  io.to('room:' + roomId).emit('dispatch', actions.roomActivated(room, users))
   return action
 }
 

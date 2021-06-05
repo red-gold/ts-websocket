@@ -8,6 +8,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack --config webpack.config.js",
+    "buildup:compose": "npm run build && docker-compose up -d --force-recreate --build",
     "start": "node build/serve.js",
     "dev": "./dev_start.sh"
   },
@@ -15,29 +16,29 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.19.0",
-    "cookie-parse": "^0.4.0",
-    "cookie-parser": "^1.4.5",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "got": "^11.8.2",
-    "jsonwebtoken": "^8.5.1",
-    "socket.io": "^4.0.0",
-    "uuid": "^8.3.2",
     "@babel/cli": "^7.13.10",
     "@babel/core": "^7.13.10",
     "@babel/plugin-transform-runtime": "^7.13.10",
     "@babel/preset-env": "^7.13.12",
     "babel-loader": "^8.2.2",
+    "body-parser": "^1.19.0",
+    "cookie-parse": "^0.4.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
     "eslint": "^7.22.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",
+    "express": "^4.17.1",
+    "got": "^11.8.2",
+    "jsonwebtoken": "^8.5.1",
+    "node-cron": "^3.0.0",
+    "socket.io": "^4.0.0",
+    "uuid": "^8.3.2",
+    "validator": "^13.6.0",
     "webpack": "^5.28.0",
     "webpack-cli": "^4.5.0",
     "webpack-node-externals": "^2.5.2"
-  },
-  "devDependencies": {
   }
 }

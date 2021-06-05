@@ -1,4 +1,5 @@
 import SocketIO from 'socket.io'
+import actions from './actions'
 import { verifyJWTFromCookei } from './authService'
 import { messageWSEventHandlers } from './messageService'
 import { getRoomsByUserId, roomWSEventHandlers } from './roomService'
@@ -12,13 +13,11 @@ export const initWebSocket = async (server, origin) => {
     cors: {
       origin,
       credentials: true
+
     }
   })
   io.use(async function (socket, next) {
     const handshakeData = socket.request
-    const accessKey = handshakeData._query.accessKey
-    const uid = handshakeData._query.uid
-    console.log('[INFO] middleware: ', accessKey, 'uid: ', uid, ' headers: ', handshakeData.headers)
     // Verify token from cookie
     try {
       console.log('[INFO] Verifying user cookie...')
@@ -54,11 +53,11 @@ export const initWebSocket = async (server, origin) => {
     try {
       const sockets = io.sockets.adapter.rooms.get('user:' + uid)
       const { rooms, roomIds } = await getRoomsByUserId(uid)
-      socket.emit('dispatch', { type: 'SET_ROOM_ENTITIES', payload: { rooms } })
+      socket.emit('dispatch', actions.setRoomEntities(rooms))
       if (sockets.size === 1) {
         roomIds.forEach((roomId) => {
           socket.join('room:' + roomId)
-          io.to('room:' + roomId).emit('dispatch', { type: 'UPDATE_LAST_SEEN_USER', payload: { roomId: roomId, userId: uid, lastSeen: 1 } })
+          io.to('room:' + roomId).emit('dispatch', actions.updateLastSeenUser(roomId, uid, 1))
         })
       } else if (sockets.size > 1) {
         roomIds.forEach((roomId) => {
@@ -95,7 +94,7 @@ const handleDisconnecting = (io, socket, uid) => async () => {
     const parsedRooms = Array.from(socket.rooms)
     const chatRooms = parsedRooms.filter((room) => room.startsWith('room:'))
     chatRooms.forEach((room) => {
-      io.to(room).emit('dispatch', { type: 'UPDATE_LAST_SEEN_USER', payload: { roomId: room.slice(5), userId: uid, lastSeen: new Date().getTime() } })
+      io.to(room).emit('dispatch', actions.updateLastSeenUser(room.slice(5), uid, new Date().getTime()))
     })
   }
 }

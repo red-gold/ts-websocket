@@ -1,50 +1,44 @@
 import { appConfig } from './appConfig'
 import { initRouter } from './routing'
 import { initWebSocket } from './websocket'
+import { runEmailNotifyTask } from './taskManager'
 
 const express = require('express')
 const cookieParser = require('cookie-parser')()
 
 console.log('Payload Secret: ', appConfig.payloadSecret)
-
 // *************************
 // Initialize express server
 // *************************
 const PORT = process.env.PORT || 3001
 
+const cors = require('cors')
 const whitelist = appConfig.originEnv.split(',').map((url) => url.trim())
 const app = express()
-if (appConfig.originEnv && appConfig.originEnv.length > 0) {
-  const cors = require('cors')
-  console.log('Origin whitelist: ', whitelist)
+app.disable('x-powered-by')
 
-  const corsOptions = {
-    origin: function (origin, callback) {
-      if (whitelist.indexOf(origin) !== -1) {
-        callback(null, true)
-      } else {
-        console.error('Origin is not defined! ', origin)
-        callback(new Error('Not allowed by CORS'))
-      }
+if (appConfig.originEnv && appConfig.originEnv.length > 0) {
+  console.log('Origin whitelist: ', whitelist)
+  const corsOptionsDelegate = function (req, callback) {
+    let corsOptions
+    if (whitelist.indexOf(req.header('Origin')) !== -1) {
+      console.log('Origin IS valid ')
+
+      corsOptions = { origin: true, credentials: true } // reflect (enable) the requested origin in the CORS response
+    } else {
+      corsOptions = { origin: false, credentials: true } // disable CORS for this request
     }
+    callback(null, corsOptions) // callback expects two parameters: error and options
   }
-  app.use(cors(corsOptions))
+
+  app.use(cors(corsOptionsDelegate))
 } else {
   console.error('Origin is not defined!')
 }
-app.disable('x-powered-by')
 
-app.use(function (req, res, next) {
-  console.log('Rquest origin URL: ', req.originalUrl)
-  res.header('Access-Control-Allow-Origin', '*')
-  res.header('Access-Control-Allow-Credentials', true)
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json'
-  )
-  next()
-})
+// Run task manager
+runEmailNotifyTask()
+
 app.use(cookieParser)
 app.use(function (req, res, next) {
   let data = ''

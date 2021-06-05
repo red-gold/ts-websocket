@@ -39,11 +39,9 @@ export const checkAccessKey = async (userId, accessKey, onError, onSuccess) => {
 }
 
 /**
- * Verify JWT from cookei
+ * Get token from cookie
  */
-export const verifyJWTFromCookei = (rawCookie) => {
-  console.log('[INFO] Input verifyJWTFromCookei cookie to parse ', rawCookie)
-
+const getTokenFromCookie = (rawCookie) => {
   const cookies = cookie.parse(rawCookie)
   console.log('[INFO] Received cookie ', cookies)
   if (!cookies.he) {
@@ -57,13 +55,18 @@ export const verifyJWTFromCookei = (rawCookie) => {
   }
 
   const token = `${cookies.he}.${cookies.pa}.${cookies.si}`
+  return token
+}
 
-  // create a buffer
-  const buff = Buffer.from(appConfig.publicKey, 'base64')
+/**
+ * Verify JWT from cookei
+ */
+export const verifyJWTFromCookei = (rawCookie) => {
+  console.log('[INFO] Input verifyJWTFromCookei cookie to parse ', rawCookie)
 
-  // decode buffer as UTF-8
-  const cert = buff.toString('utf-8')
+  const token = getTokenFromCookie(rawCookie)
 
+  const cert = appConfig.publicKey
   const verifiedToken = jwt.verify(token, cert, { algorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'] })
   console.log('[INFO] ', 'verifiedToken ', verifiedToken)
   return verifiedToken

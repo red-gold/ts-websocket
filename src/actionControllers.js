@@ -2,7 +2,6 @@ import { GateKeeper } from '../utils/hmac'
 import { actionMiddlewares } from './actionMiddlewares'
 import { appConfig } from './appConfig'
 import { XCloudSignature } from './constants'
-import { reducer } from './reducer'
 
 /**
  * Dispatch controller
@@ -43,7 +42,6 @@ export const dispatchController = (io) => async (req, res) => {
   if (isValidReq) {
     // Process action
     const action = actionMiddlewares(io, JSON.parse(req.rawBody))
-    reducer(action)
     io.to('user:' + room).emit('dispatch', action)
     return res.status(200).send({ success: true })
   }
@@ -92,7 +90,6 @@ export const dispatchListController = (io) => async (req, res) => {
     const actionList = JSON.parse(req.rawBody)
     actionList.map((action) => {
       const actionAfterMiddleware = actionMiddlewares(io, action)
-      reducer(actionAfterMiddleware)
       return actionAfterMiddleware
     })
     io.to('user:' + room).emit('dispatch-list', req.rawBody)

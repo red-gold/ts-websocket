@@ -62,6 +62,15 @@ const removeChatRequest = (userId) => {
 }
 
 /**
+ * Set room entities
+ */
+const setRoomEntities = (rooms) => {
+  return {
+    type: 'SET_ROOM_ENTITIES', payload: { rooms }
+  }
+}
+
+/**
  * Add plain chat messages
  */
 const addRoomMessages = (messages, roomId, requestId) => {
@@ -76,6 +85,24 @@ const addRoomMessages = (messages, roomId, requestId) => {
 const addRoomNewMessages = (messages, roomId) => {
   return {
     type: 'SG_ADD_ROOM_NEW_MESSAGES', payload: { messages, roomId }
+  }
+}
+
+/**
+ * Update last seen user
+ */
+const updateLastSeenUser = (roomId, userId, lastSeen) => {
+  return {
+    type: 'UPDATE_LAST_SEEN_USER', payload: { roomId, userId, lastSeen }
+  }
+}
+
+/**
+ * Room activated signal
+ */
+const roomActivated = (room, users) => {
+  return {
+    type: 'ROOM_ACTIVATED', payload: { room, users }
   }
 }
 
@@ -117,5 +144,8 @@ export default {
   removeChatCalling,
   addRoomMessages,
   addRoomNewMessages,
-  errorRequest
+  errorRequest,
+  setRoomEntities,
+  updateLastSeenUser,
+  roomActivated
 }
