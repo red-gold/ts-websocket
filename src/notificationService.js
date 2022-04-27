@@ -2,7 +2,7 @@
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-import { postHMAC } from './httpService'
+import { postHMAC } from './httpService';
 
 /**
  * Check notify email queue
@@ -10,10 +10,15 @@ import { postHMAC } from './httpService'
  */
 export const checkNotifyEmail = async (uid) => {
   const data = {
-    url: '/notifications/check'
+    url: '/notifications/check',
+  };
+
+  try {
+    const result = await postHMAC('/notifications/check', data, {
+      userId: uid,
+    });
+    return JSON.parse(result);
+  } catch (error) {
+    console.log('[ERROR] checkNotifyEmail', error);
   }
-
-  const result = await postHMAC('/notifications/check', data, { userId: uid })
-
-  return JSON.parse(result)
-}
+};
