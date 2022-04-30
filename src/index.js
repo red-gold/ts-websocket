@@ -37,7 +37,7 @@ if (appConfig.originEnv && appConfig.originEnv.length > 0) {
 }
 
 // Run task manager
-// runEmailNotifyTask();
+runEmailNotifyTask();
 
 app.use(cookieParser);
 app.use(function (req, res, next) {
