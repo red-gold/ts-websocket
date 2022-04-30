@@ -12,7 +12,6 @@ import { XCloudSignature } from './constants';
  * @returns response body
  */
 export const postHMAC = (url, json, userInfo) => {
-  console.log('postHMAC: ', url, json, userInfo);
   return callAPIWithHMAC('POST', url, json, userInfo);
 };
 
@@ -24,7 +23,6 @@ export const postHMAC = (url, json, userInfo) => {
  * @returns response body
  */
 export const putHMAC = (url, json, userInfo) => {
-  console.log('putHMAC: ', url, json, userInfo);
   return callAPIWithHMAC('PUT', url, json, userInfo);
 };
 
@@ -37,12 +35,19 @@ export const putHMAC = (url, json, userInfo) => {
  * @returns response body
  */
 const callAPIWithHMAC = async (method, url, json, userInfo) => {
-  console.log('callAPIWithHMAC: ', method, url, json, userInfo);
   const hashData = GateKeeper.sign(
     JSON.stringify(json),
     appConfig.payloadSecret
   );
   const uri = getPrettyURLf(url);
+  console.log(
+    '[INFO][HTTP CALL] callAPIWithHMAC: ',
+    'Method: ' + method,
+    'URL: ' + url,
+    'Payload: ' + json,
+    'User Info: ' + userInfo,
+    'URI: ' + uri
+  );
   const options = {
     headers: { origin: 'https://social.telar.dev' },
     json,
