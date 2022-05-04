@@ -17,6 +17,7 @@ export const checkNotifyEmail = async (uid) => {
     const result = await postHMAC('/notifications/check', data, {
       userId: uid,
     });
+    console.log('[INFO][NOTIFICATION] checkNotifyEmail: ', result);
     return JSON.parse(result);
   } catch (error) {
     console.log('[ERROR] checkNotifyEmail', error);
