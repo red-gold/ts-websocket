@@ -7,7 +7,7 @@ import { XCloudSignature } from './constants';
 /**
  *  Post request with HMAC
  * @param {string} url Request URL
- * @param {*} body Request payload
+ * @param {*} json Request payload
  * @param {*} userInfo User information for request
  * @returns response body
  */
@@ -18,7 +18,7 @@ export const postHMAC = (url, json, userInfo) => {
 /**
  *  Put request with HMAC
  * @param {string} url Request URL
- * @param {*} body Request payload
+ * @param {*} json Request payload
  * @param {*} userInfo User information for request
  * @returns response body
  */
@@ -28,9 +28,9 @@ export const putHMAC = (url, json, userInfo) => {
 
 /**
  * Call api with HMAC header
- * @param {POST|GET|PUT} method HTTP method
+ * @param {import('got').Method} method HTTP method
  * @param {string} url Request URL
- * @param {*} body Request payload
+ * @param {*} json Request payload
  * @param {*} userInfo User information for request
  * @returns response body
  */
@@ -61,6 +61,6 @@ const callAPIWithHMAC = async (method, url, json, userInfo) => {
     console.log('body: ', response.body);
     return response.body;
   } else {
-    throw new Error('Status code is not OK => ', response.statusCode);
+    throw new Error('Status code is not OK => ' + response.statusCode);
   }
 };

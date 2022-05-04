@@ -3,6 +3,7 @@ import actions from './actions';
 import { verifyJWTFromCookei } from './authService';
 import { messageWSEventHandlers } from './messageService';
 import { getRoomsByUserId, roomWSEventHandlers } from './roomService';
+import cookie from 'cookie-parse';
 import { updateLastSeen } from './userService';
 
 /**
@@ -20,15 +21,19 @@ export const initWebSocket = async (server, origin) => {
     const handshakeData = socket.request;
     // Verify token from cookie
     try {
-      const rawCookies = handshakeData.headers['set-cookie'];
-      const cookies = rawCookies
-        .map((cookie) => cookie.split('; ')[0])
-        .reduce((prev, current) => {
-          const [name, ...value] = current.split('=');
-          prev[name] = value.join('=');
-          return prev;
-        }, {});
-
+      let cookies = {};
+      if (handshakeData.headers.cookie) {
+        cookies = cookie.parse(handshakeData.headers.cookie);
+      } else {
+        const rawCookies = handshakeData.headers['set-cookie'];
+        cookies = rawCookies
+          .map((cookie) => cookie.split('; ')[0])
+          .reduce((prev, current) => {
+            const [name, ...value] = current.split('=');
+            prev[name] = value.join('=');
+            return prev;
+          }, {});
+      }
       const { claim } = verifyJWTFromCookei(cookies);
       console.log('[INFO] Cookie is verified for ', claim.uid);
       socket.uid = claim.uid;
