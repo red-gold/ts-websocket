@@ -35,6 +35,7 @@ export const initWebSocket = async (server, origin) => {
             return prev;
           }, {});
       }
+      console.log('[INFO] Cookies: ', JSON.stringify(cookies));
       const { claim } = verifyJWTFromCookei(cookies);
       console.log('[INFO] Cookie is verified for ', claim.uid);
       socket.uid = claim.uid;
