@@ -27,6 +27,7 @@ export const initWebSocket = async (server, origin) => {
         cookies = cookie.parse(handshakeData.headers.cookie);
       } else {
         const rawCookies = handshakeData.headers['set-cookie'];
+        console.log(JSON.stringify(handshakeData.headers));
         cookies = rawCookies
           .map((cookie) => cookie.split('; ')[0])
           .reduce((prev, current) => {
