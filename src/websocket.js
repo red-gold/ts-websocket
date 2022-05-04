@@ -20,6 +20,7 @@ export const initWebSocket = async (server, origin) => {
   io.use(async function (socket, next) {
     const handshakeData = socket.request;
     // Verify token from cookie
+    console.log('[INFO] Verify token from cookie');
     try {
       let cookies = {};
       if (handshakeData.headers.cookie) {
