@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3001;
 
 const cors = require('cors');
 const whitelist = appConfig.originEnv.split(',').map((url) => url.trim());
+console.log('[INFO] Whitelist: ', JSON.stringify(whitelist, null, 2));
 const app = express();
 app.disable('x-powered-by');
 
@@ -21,6 +22,7 @@ if (appConfig.originEnv && appConfig.originEnv.length > 0) {
   console.log('Origin whitelist: ', whitelist);
   const corsOptionsDelegate = function (req, callback) {
     let corsOptions;
+    console.log('[INFO] Origin: ', req.headers.origin, req.header('Origin'));
     if (whitelist.indexOf(req.header('Origin')) !== -1) {
       console.log('Origin IS valid ');
 
