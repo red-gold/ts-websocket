@@ -63,8 +63,6 @@ const getTokenFromCookie = (cookies) => {
  * Verify JWT from cookei
  */
 export const verifyJWTFromCookei = (rawCookie) => {
-  console.log('[INFO] Input verifyJWTFromCookei cookie to parse ');
-
   const token = getTokenFromCookie(rawCookie);
   return verifyJWT(token);
 };
@@ -73,12 +71,9 @@ export const verifyJWTFromCookei = (rawCookie) => {
  * Verify JWT
  */
 export const verifyJWT = (token) => {
-  console.log('[INFO] Token is ', token);
   const cert = appConfig.publicKey;
-  console.log('cert', cert);
   const verifiedToken = jwt.verify(token, cert, {
     algorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'],
   });
-  console.log('[INFO] ', 'verifiedToken ', verifiedToken);
   return verifiedToken;
 };

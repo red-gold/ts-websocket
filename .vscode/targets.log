@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Tue Aug 16 13:44:32 2022
+# Make data base, printed on Tue Aug 16 14:39:36 2022
 
 # Variables
 
@@ -151,7 +151,7 @@ LC_PAPER = en_US.UTF-8
 # environment
 XDG_RUNTIME_DIR = /run/user/1000
 # environment
-VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-2dd2c2d6-9548-4af3-aa61-a454cec52d79.sock
+VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-2a5b13e6-6537-46f2-be83-bc374d06585e.sock
 # environment
 NVM_CD_FLAGS = -q
 # environment
@@ -244,6 +244,6 @@ build:
 # strcache performance: lookups = 42 / hit rate = 19%
 # hash-table stats:
 # Load=34/8192=0%, Rehash=0, Collisions=0/42=0%
-# Finished Make data base on Tue Aug 16 13:44:32 2022
+# Finished Make data base on Tue Aug 16 14:39:36 2022
 
  

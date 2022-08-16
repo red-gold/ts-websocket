@@ -18,12 +18,12 @@ export const initWebSocket = async (server, origin) => {
   });
   io.use(async function (socket, next) {
     // Verify token from cookie
-    console.log('[INFO] Verify token from cookie');
+    console.log('[INFO] Verify token');
     try {
       const token = socket.handshake.auth.token;
       console.log(token);
       const { claim } = verifyJWT(token);
-      console.log('[INFO] Cookie is verified for ', claim.uid);
+      console.log('[INFO] Token is verified for ', claim.uid);
       socket.uid = claim.uid;
       next();
     } catch (error) {
