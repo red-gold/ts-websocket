@@ -66,6 +66,13 @@ export const verifyJWTFromCookei = (rawCookie) => {
   console.log('[INFO] Input verifyJWTFromCookei cookie to parse ');
 
   const token = getTokenFromCookie(rawCookie);
+  return verifyJWT(token);
+};
+
+/**
+ * Verify JWT
+ */
+export const verifyJWT = (token) => {
   console.log('[INFO] Token is ', token);
   const cert = appConfig.publicKey;
   const verifiedToken = jwt.verify(token, cert, {

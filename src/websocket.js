@@ -1,9 +1,8 @@
 import { Server } from 'socket.io';
 import actions from './actions';
-import { verifyJWTFromCookei } from './authService';
+import { verifyJWT } from './authService';
 import { messageWSEventHandlers } from './messageService';
 import { getRoomsByUserId, roomWSEventHandlers } from './roomService';
-import cookie from 'cookie-parse';
 import { updateLastSeen } from './userService';
 
 /**
@@ -22,22 +21,9 @@ export const initWebSocket = async (server, origin) => {
     // Verify token from cookie
     console.log('[INFO] Verify token from cookie');
     try {
-      let cookies = {};
-      if (handshakeData.headers.cookie) {
-        cookies = cookie.parse(handshakeData.headers.cookie);
-      } else {
-        const rawCookies = handshakeData.headers['set-cookie'];
-        console.log(JSON.stringify(handshakeData.headers));
-        cookies = rawCookies
-          .map((cookie) => cookie.split('; ')[0])
-          .reduce((prev, current) => {
-            const [name, ...value] = current.split('=');
-            prev[name] = value.join('=');
-            return prev;
-          }, {});
-      }
-      console.log('[INFO] Cookies: ', JSON.stringify(cookies));
-      const { claim } = verifyJWTFromCookei(cookies);
+      const token = handshakeData.auth.token;
+      console.log(token);
+      const { claim } = verifyJWT(token);
       console.log('[INFO] Cookie is verified for ', claim.uid);
       socket.uid = claim.uid;
       next();
