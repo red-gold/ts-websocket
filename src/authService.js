@@ -75,6 +75,7 @@ export const verifyJWTFromCookei = (rawCookie) => {
 export const verifyJWT = (token) => {
   console.log('[INFO] Token is ', token);
   const cert = appConfig.publicKey;
+  console.log('cert', cert);
   const verifiedToken = jwt.verify(token, cert, {
     algorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'],
   });
