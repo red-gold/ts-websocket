@@ -17,11 +17,10 @@ export const initWebSocket = async (server, origin) => {
     },
   });
   io.use(async function (socket, next) {
-    const handshakeData = socket.request;
     // Verify token from cookie
     console.log('[INFO] Verify token from cookie');
     try {
-      const token = handshakeData.auth.token;
+      const token = socket.handshake.auth.token;
       console.log(token);
       const { claim } = verifyJWT(token);
       console.log('[INFO] Cookie is verified for ', claim.uid);
